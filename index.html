@@ -181,6 +181,7 @@ body{font-family:var(--font);background:var(--cream);color:var(--dark);min-heigh
       </div>
       <div class="wk-btns">
         <button class="bsm" onclick="clearWeek()">Clear</button>
+        <button class="bsm" onclick="shareLineup()">Share ↗</button>
         <button class="bpr" onclick="openEmail()">Draft email ↗</button>
       </div>
     </div>
@@ -488,6 +489,187 @@ document.getElementById('an').addEventListener('keydown',e=>{if(e.key==='Enter')
 document.getElementById('ah').addEventListener('keydown',e=>{if(e.key==='Enter')addPlayer();});
 
 setWeek(W);
+
+function shareLineup() {
+  const l = LU[W], w = WEEKS[W];
+
+  // Build a canvas image of the lineup
+  const canvas = document.createElement('canvas');
+  const dpr = 2; // retina
+  const W_px = 900, H_px = 640;
+  canvas.width = W_px * dpr;
+  canvas.height = H_px * dpr;
+  canvas.style.width = W_px + 'px';
+  canvas.style.height = H_px + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Colors
+  const GREEN = '#2D6A4F', GOLD = '#B7860B', DARK = '#1C1A18';
+  const G1 = '#F4F2EF', G2 = '#E5E2DC', G4 = '#8A8680', WHITE = '#ffffff';
+  const HOME_C = '#1B4F72', HOME_BG = '#EBF5FB', AWAY_C = '#7D6608', AWAY_BG = '#FEF9E7';
+  const PLUS_C = '#2D6A4F', PLUS_BG = '#D8F3DC';
+
+  // Background
+  ctx.fillStyle = G1;
+  ctx.fillRect(0, 0, W_px, H_px);
+
+  // Header bar
+  ctx.fillStyle = WHITE;
+  ctx.fillRect(0, 0, W_px, 56);
+  ctx.fillStyle = GOLD;
+  ctx.fillRect(0, 54, W_px, 3);
+
+  // Header text
+  ctx.fillStyle = DARK;
+  ctx.font = 'bold 18px Inter, sans-serif';
+  ctx.fillText('GAP Team 2 — Lineup Builder', 20, 34);
+  ctx.fillStyle = G4;
+  ctx.font = '11px "JetBrains Mono", monospace';
+  ctx.fillText(w.title + '  ·  ' + w.sub, 20, 50);
+
+  // Two column layout
+  const colW = (W_px - 48) / 2;
+  const startY = 72;
+
+  function drawSide(side, x, label, opp, headerBg, headerColor) {
+    const arr = LU[W][side];
+    let y = startY;
+
+    // Section header
+    roundRect(ctx, x, y, colW, 34, 8);
+    ctx.fillStyle = headerBg;
+    ctx.fill();
+    ctx.fillStyle = headerColor;
+    ctx.font = 'bold 10px "JetBrains Mono", monospace';
+    ctx.fillText((label + '  ·  ' + opp).toUpperCase(), x + 14, y + 21);
+    y += 34 + 8;
+
+    for (let i = 0; i < 3; i++) {
+      // Tee time label
+      ctx.fillStyle = G1;
+      roundRect(ctx, x, y, colW, 22, [6, 6, 0, 0]);
+      ctx.fill();
+      ctx.strokeStyle = G2;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = G4;
+      ctx.font = '9px "JetBrains Mono", monospace';
+      ctx.fillText('TEE TIME ' + (i + 1), x + 10, y + 14);
+      y += 22;
+
+      // Pair box
+      const pairH = 52;
+      ctx.fillStyle = WHITE;
+      roundRect(ctx, x, y, colW, pairH, [0, 0, 6, 6]);
+      ctx.fill();
+      ctx.strokeStyle = G2;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Two player slots
+      const slotW = colW / 2;
+      for (let si = 0; si < 2; si++) {
+        const sx = x + si * slotW;
+        const player = arr[i][si];
+        if (si === 0) {
+          ctx.strokeStyle = G2;
+          ctx.beginPath();
+          ctx.moveTo(x + slotW, y + 8);
+          ctx.lineTo(x + slotW, y + pairH - 8);
+          ctx.stroke();
+        }
+        if (player) {
+          // HCP badge
+          const isP = player.h && player.h.startsWith('+');
+          const badgeW = 36;
+          ctx.fillStyle = isP ? PLUS_BG : G1;
+          roundRect(ctx, sx + 8, y + 10, badgeW, 18, 4);
+          ctx.fill();
+          ctx.fillStyle = isP ? PLUS_C : G4;
+          ctx.font = 'bold 10px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(player.h, sx + 8 + badgeW / 2, y + 22);
+          ctx.textAlign = 'left';
+          // Name
+          ctx.fillStyle = DARK;
+          ctx.font = 'bold 12px Inter, sans-serif';
+          const nameX = sx + 8 + badgeW + 6;
+          const maxW = slotW - badgeW - 24;
+          let name = player.n;
+          // Truncate if needed
+          while (ctx.measureText(name).width > maxW && name.length > 4) {
+            name = name.slice(0, -1);
+          }
+          if (name !== player.n) name += '…';
+          ctx.fillText(name, nameX, y + 22);
+          ctx.font = '10px Inter, sans-serif';
+          ctx.fillStyle = G4;
+          // Last name only on second line if full name shown
+        } else {
+          ctx.fillStyle = G2;
+          ctx.font = '9px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('—', sx + slotW / 2, y + pairH / 2 + 4);
+          ctx.textAlign = 'left';
+        }
+      }
+      y += pairH + 8;
+    }
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    if (typeof r === 'number') r = [r, r, r, r];
+    ctx.beginPath();
+    ctx.moveTo(x + r[0], y);
+    ctx.lineTo(x + w - r[1], y);
+    ctx.arcTo(x + w, y, x + w, y + r[1], r[1]);
+    ctx.lineTo(x + w, y + h - r[2]);
+    ctx.arcTo(x + w, y + h, x + w - r[2], y + h, r[2]);
+    ctx.lineTo(x + r[3], y + h);
+    ctx.arcTo(x, y + h, x, y + h - r[3], r[3]);
+    ctx.lineTo(x, y + r[0]);
+    ctx.arcTo(x, y, x + r[0], y, r[0]);
+    ctx.closePath();
+  }
+
+  drawSide('home', 16, 'Home', 'LedgeRock', HOME_BG, HOME_C);
+  drawSide('away', 16 + colW + 16, 'Away', WEEKS[W].opp, AWAY_BG, AWAY_C);
+
+  // Footer
+  ctx.fillStyle = G4;
+  ctx.font = '10px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('LedgeRock Golf Club  ·  GAP Match Play 2026', W_px / 2, H_px - 12);
+  ctx.textAlign = 'left';
+
+  // Share as PNG
+  canvas.toBlob(async (blob) => {
+    const file = new File([blob], 'ledgerock-lineup-' + w.opp.toLowerCase().replace(/\s+/g, '-') + '.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: 'LedgeRock GAP Team 2 — ' + w.title,
+          text: w.title + ' · ' + w.sub,
+          files: [file],
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') fallbackDownload(canvas, w);
+      }
+    } else {
+      fallbackDownload(canvas, w);
+    }
+  }, 'image/png');
+}
+
+function fallbackDownload(canvas, w) {
+  const a = document.createElement('a');
+  a.download = 'ledgerock-lineup-' + w.opp.toLowerCase().replace(/\s+/g, '-') + '.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  toast('Image downloaded');
+}
+
 </script>
 </body>
 </html>
