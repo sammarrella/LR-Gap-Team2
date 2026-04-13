@@ -30,7 +30,7 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
 /* ═══ WEEK TABS ════════════════════════════════════════ */
 .tabs{background:var(--w);border-bottom:1px solid var(--g2);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:57px;z-index:45;}
 .tabs::-webkit-scrollbar{display:none;}
-.tab{flex:1;min-width:80px;padding:10px 4px;text-align:center;font-family:var(--mono);font-size:9px;font-weight:600;color:var(--g4);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;}
+.tab{flex:1;min-width:0;padding:10px 6px;text-align:center;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--g4);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;}
 .tab.on{color:var(--green);border-bottom-color:var(--green);}
 
 /* ═══ WEEK HEADER ══════════════════════════════════════ */
@@ -204,9 +204,9 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
 </header>
 
 <nav class="tabs">
-  <div class="tab on" onclick="setWeek(0)">WK1 · Apr 19 · Lebanon</div>
-  <div class="tab" onclick="setWeek(1)">WK2 · Apr 26 · RiverCrest</div>
-  <div class="tab" onclick="setWeek(2)">WK3 · May 3 · Berwick</div>
+  <div class="tab on" onclick="setWeek(0)">Week 1 · Lebanon</div>
+  <div class="tab" onclick="setWeek(1)">Week 2 · RiverCrest</div>
+  <div class="tab" onclick="setWeek(2)">Week 3 · Berwick</div>
 </nav>
 
 <!-- DESKTOP LAYOUT WRAPPER -->
@@ -278,7 +278,7 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
     </div>
 
     <!-- MOBILE: Add player + bottom actions -->
-    <div class="add-section">
+    <div class="add-section" style="display:none;" id="mob-add-top">
       <button class="add-tog" id="mob-at" onclick="mToggle()">+ Add Player</button>
       <div class="add-frm" id="mob-af">
         <div class="arow">
@@ -293,6 +293,7 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
     </div>
 
     <div class="bottom-actions">
+      <button class="btn-full" onclick="showMobAdd()">+ Add Player</button>
       <button class="btn-full" onclick="openRoster()">📋 Roster &amp; Availability</button>
     </div>
 
@@ -697,6 +698,14 @@ function dlCanvas(canvas,w){
   const a=document.createElement('a');
   a.download='ledgerock-t2-'+w.opp.toLowerCase().replace(/\s+/g,'-')+'.png';
   a.href=canvas.toDataURL('image/png');a.click();toast('Image downloaded');
+}
+
+
+function showMobAdd() {
+  const sec = document.getElementById('mob-add-top');
+  sec.style.display = 'block';
+  mToggle();
+  sec.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function toast(msg){
