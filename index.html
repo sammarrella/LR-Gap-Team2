@@ -278,23 +278,21 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
     </div>
 
     <!-- MOBILE: Add player + bottom actions -->
-    <div class="add-section" style="display:none;" id="mob-add-top">
-      <button class="add-tog" id="mob-at" onclick="mToggle()">+ Add Player</button>
-      <div class="add-frm" id="mob-af">
-        <div class="arow">
-          <input type="text" id="mn" placeholder="Player name" autocomplete="off"/>
-          <input type="text" id="mh" placeholder="HCP" autocomplete="off"/>
-        </div>
-        <div class="abtns">
-          <button class="bcxl" onclick="mToggle()">Cancel</button>
-          <button class="bgrn" onclick="mAdd()">Add</button>
-        </div>
-      </div>
-    </div>
+    
 
     <div class="bottom-actions">
-      <button class="btn-full" onclick="showMobAdd()">+ Add Player</button>
+      <button class="btn-full" id="mob-at" onclick="mToggle()">+ Add Player</button>
       <button class="btn-full" onclick="openRoster()">📋 Roster &amp; Availability</button>
+    </div>
+    <div class="add-frm" id="mob-af" style="margin:0 12px 12px;">
+      <div class="arow">
+        <input type="text" id="mn" placeholder="Player name" autocomplete="off"/>
+        <input type="text" id="mh" placeholder="HCP" autocomplete="off"/>
+      </div>
+      <div class="abtns">
+        <button class="bcxl" onclick="mToggle()">Cancel</button>
+        <button class="bgrn" onclick="mAdd()">Add</button>
+      </div>
     </div>
 
     <!-- DESKTOP lineup grid (JS inserts home+away here on wide screens) -->
@@ -701,12 +699,6 @@ function dlCanvas(canvas,w){
 }
 
 
-function showMobAdd() {
-  const sec = document.getElementById('mob-add-top');
-  sec.style.display = 'block';
-  mToggle();
-  sec.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
 
 function toast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
