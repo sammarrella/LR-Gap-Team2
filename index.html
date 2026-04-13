@@ -260,7 +260,7 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
         <span class="pool-arrow" id="pool-arrow">▲</span>
       </button>
       <div class="pool-body" id="pool-body">
-        <div class="pool-hint-bar" id="pool-hint">Tap a player, then tap a slot to place</div>
+        <div class="pool-hint-bar" id="pool-hint">Tap to auto-place · Hold to choose slot</div>
         <div class="pool-grid" id="mob-pool"></div>
       </div>
     </div>
@@ -416,10 +416,42 @@ function setWeek(w){
 function hcpEl(h){return`<span class="chcp${isPlus(h)?' plus':''}">${h}</span>`;}
 
 // ── MOBILE TAP-TO-ASSIGN ─────────────────────────────────
-function pickPlayer(n){
-  picked=picked&&picked.n===n?null:find(n);
-  updateHint();render();renderMobPool();
+function autoFill(player) {
+  // Find next empty slot: home first, then away
+  for (const side of ['home','away']) {
+    for (let pi=0; pi<3; pi++) {
+      for (let si=0; si<2; si++) {
+        if (!LU[W][side][pi][si]) {
+          LU[W][side][pi][si] = player;
+          picked = null;
+          updateHint();
+          save(); render(); renderMobPool(); renderDeskPool();
+          return true;
+        }
+      }
+    }
+  }
+  toast('All slots are full');
+  return false;
 }
+
+function pickPlayer(n) {
+  // Called on quick tap — auto fill next open slot
+  const player = find(n);
+  if (!player) return;
+  // If already selected (long press mode), deselect
+  if (picked && picked.n === n) { picked = null; updateHint(); render(); renderMobPool(); return; }
+  autoFill(player);
+}
+
+function longPickPlayer(n) {
+  // Called on long press — select for manual placement
+  const player = find(n);
+  if (!player) return;
+  picked = picked && picked.n === n ? null : player;
+  updateHint(); render(); renderMobPool();
+}
+
 function assignSlot(side,pi,si){
   if(!picked){
     const arr=LU[W][side];
@@ -530,8 +562,13 @@ function renderMobPool(){
   el.innerHTML=avail(W).map(p=>{
     const isSel=picked&&picked.n===p.n;
     const isLate=late.some(x=>x.n===p.n);
-    return`<div class="pcard${isSel?' sel':''}${isLate?' late':''}" onclick="pickPlayer('${esc(p.n)}')">
+    return`<div class="pcard${isSel?' sel':''}${isLate?' late':''}"
+      ontouchstart="startLongPress(event,'${esc(p.n)}')"
+      ontouchend="endLongPress(event,'${esc(p.n)}')"
+      ontouchmove="cancelLongPress()"
+      onclick="handlePoolTap('${esc(p.n)}')">
       ${hcpEl(p.h)}<span class="cname">${p.n}</span>
+      ${isSel?'<span style="font-size:10px;color:var(--green);font-family:var(--mono);flex-shrink:0;">tap slot</span>':''}
     </div>`;
   }).join('');
 }
@@ -620,8 +657,7 @@ function openEmail(){
   ['Tee Time 1','Tee Time 2','Tee Time 3'].forEach((t,i)=>{const p=l.home[i].filter(Boolean);if(p.length)lines.push(t+': '+p.map(x=>x.n).join(' & '));});
   lines.push('','Away:');
   ['Tee Time 1','Tee Time 2','Tee Time 3'].forEach((t,i)=>{const p=l.away[i].filter(Boolean);if(p.length)lines.push(t+': '+p.map(x=>x.n).join(' & '));});
-  lines.push('','*Each player is responsible for paying the $120 Caddie Fee in CASH to your caddie after the round*');
-  lines.push('**We may adjust the order of tee times once we see '+w.opp+"'s lineup**");
+
   document.getElementById('em-sub').textContent=w.title+' · '+w.sub;
   document.getElementById('em-txt').textContent=lines.join('\n');
   document.getElementById('copy-btn').textContent='Copy to Clipboard';
@@ -699,6 +735,38 @@ function dlCanvas(canvas,w){
 }
 
 
+
+
+let _lpTimer = null;
+let _lpFired = false;
+let _lpMoved = false;
+
+function startLongPress(e, n) {
+  _lpFired = false;
+  _lpMoved = false;
+  _lpTimer = setTimeout(() => {
+    _lpFired = true;
+    longPickPlayer(n);
+    // Vibrate if supported
+    if (navigator.vibrate) navigator.vibrate(40);
+  }, 500);
+}
+
+function endLongPress(e, n) {
+  clearTimeout(_lpTimer);
+  // If long press already fired, don't also trigger tap
+  if (_lpFired || _lpMoved) { e.preventDefault(); return; }
+}
+
+function cancelLongPress() {
+  _lpMoved = true;
+  clearTimeout(_lpTimer);
+}
+
+function handlePoolTap(n) {
+  if (_lpFired) return; // long press handled it
+  pickPlayer(n);
+}
 
 function toast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
