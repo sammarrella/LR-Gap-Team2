@@ -152,7 +152,7 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
   .tab{font-size:10px;padding:12px 12px;}
   .layout{display:flex;min-height:calc(100vh - 113px);}
   .mob-main{flex:1;min-width:0;overflow:auto;}
-  .desk-sb{display:flex;width:280px;flex-shrink:0;background:var(--w);border-right:1px solid var(--g2);flex-direction:column;padding:16px 14px 70px;gap:12px;position:relative;overflow:hidden;}
+  .desk-sb{display:flex!important;width:280px;flex-shrink:0;background:var(--w);border-right:1px solid var(--g2);flex-direction:column;padding:16px 14px 70px;gap:12px;position:relative;overflow:hidden;}
   .wkbar{padding:20px 22px 14px;}
   .wk-t{font-size:20px;}
   .sec{margin:0 22px 14px;}
@@ -213,7 +213,7 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
 <div class="layout" id="layout">
 
   <!-- DESKTOP SIDEBAR (hidden on mobile via CSS) -->
-  <aside class="desk-sb" id="desk-sb">
+  <aside class="desk-sb" id="desk-sb" style="display:none;">
     <div>
       <div class="ds-lbl" style="margin-bottom:10px;">Late Add</div>
       <button class="ds-add-btn" id="dt" onclick="dToggle()">+ Add Player</button>
@@ -364,7 +364,7 @@ const BASE=[
   {n:"Mitchell Gallo",    h:"+1",  av:[1,1,1]},
   {n:"Drew Morris",       h:"+1",  av:[1,1,1]},
   {n:"Scott Merz",        h:"+1",  av:[0,0,1]},
-  {n:"JP Radwanski",      h:"0",   av:[0,0,0]},
+  {n:"JP Radwanski",      h:"0",   av:[1,1,1]},
   {n:"Don Uhrig",         h:"2",   av:[1,1,1]},
   {n:"Jeff Goyette",      h:"2",   av:[0,1,1]},
   {n:"Rory Golden",       h:"3",   av:[1,0,0]},
