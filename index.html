@@ -140,6 +140,9 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
 .copy-btn:active{background:var(--gl);}
 .copy-btn.copied{background:var(--gl);}
 
+
+.rtab{flex:1;padding:10px;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--g4);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;}
+.rtab.on{color:var(--green);border-bottom-color:var(--green);}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--dark);color:var(--w);font-family:var(--mono);font-size:11px;padding:10px 20px;border-radius:20px;opacity:0;transition:all 0.25s;pointer-events:none;z-index:500;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -234,7 +237,7 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
       ondrop="dropToPool(event)"
       ondragover="e=>{e.preventDefault();document.getElementById('ds-pool').classList.add('over');}"
       ondragleave="document.getElementById('ds-pool').classList.remove('over')"></div>
-    <button class="ds-avail" onclick="openRoster()">Roster &amp; Availability</button>
+    <button class="ds-avail" onclick="openRoster('avail')">Roster &amp; Availability</button>
   </aside>
 
   <!-- MAIN CONTENT -->
@@ -282,7 +285,7 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
 
     <div class="bottom-actions">
       <button class="btn-full" id="mob-at" onclick="mToggle()">+ Add Player</button>
-      <button class="btn-full" onclick="openRoster()">📋 Roster &amp; Availability</button>
+      <button class="btn-full" onclick="openRoster('avail')">📋 Roster &amp; Availability</button>
     </div>
     <div class="add-frm" id="mob-af" style="margin:0 12px 12px;">
       <div class="arow">
@@ -308,13 +311,21 @@ body{font-family:var(--font);background:var(--g1);color:var(--dark);min-height:1
   <div class="sheet">
     <div class="sh-handle"></div>
     <div class="sh-hdr">
-      <div><div class="sh-t">Roster &amp; Availability</div><div class="sh-s">GAP Matches 2026 · Team 2 · 40 Players</div></div>
+      <div><div class="sh-t" id="roster-title">Roster &amp; Availability</div><div class="sh-s" id="roster-sub">GAP Matches 2026 · Team 2 · 40 Players</div></div>
       <button class="sh-x" onclick="closeRoster()">✕</button>
     </div>
+    <div style="display:flex;border-bottom:1px solid var(--g2);flex-shrink:0;">
+      <button class="rtab on" id="rtab-avail" onclick="switchRosterTab('avail')">Availability</button>
+      <button class="rtab" id="rtab-eligible" onclick="switchRosterTab('eligible')">Full Eligible Roster</button>
+    </div>
     <div class="sh-scroll">
-      <table class="rtbl">
+      <table class="rtbl" id="avail-tbl">
         <thead><tr><th>Player</th><th>Hdcp</th><th>Availability</th></tr></thead>
         <tbody id="roster-body"></tbody>
+      </table>
+      <table class="rtbl" id="eligible-tbl" style="display:none;">
+        <thead><tr><th>#</th><th>Player</th><th>Course Hdcp</th></tr></thead>
+        <tbody id="eligible-body"></tbody>
       </table>
     </div>
   </div>
@@ -386,6 +397,305 @@ const BASE=[
   {n:"Mark Maggs",        h:"13",  av:[1,1,1]},
   {n:"Dan Lara",          h:"16",  av:[1,1,0]},
   {n:"Mark Edfort",       h:"18",  av:[1,1,1]},
+];
+
+const ELIGIBLE=[
+  ["Jake Haberstumpf","+7"],
+  ["Nate Menon","+6"],
+  ["Brock Kovach","+6"],
+  ["Alex Seelig","+5"],
+  ["Nathan Radwanski","+5"],
+  ["Zach Dilcher","+5"],
+  ["Luke Fagley","+4"],
+  ["Jake Rotelle","+4"],
+  ["Josh Anderson","+4"],
+  ["Grant Skyllas","+3"],
+  ["Nick Fioravante","+3"],
+  ["Alex Blickle","+3"],
+  ["Jackson Hoovler","+3"],
+  ["Tyler Mersinger","+2"],
+  ["Chris Storck","+2"],
+  ["Gavin Bereschak","+2"],
+  ["Albe Evans","+2"],
+  ["Chip Lutz","+2"],
+  ["Aaron Sepkowski","+2"],
+  ["Sam Marrella","+2"],
+  ["Mitchell Gallo","+1"],
+  ["Braedan Stringer","+1"],
+  ["Andrew Morris","+1"],
+  ["Scott Merz","+1"],
+  ["Charlie Mertz","0"],
+  ["J.P. Radwanski","0"],
+  ["Dean Harris","1"],
+  ["Clark Brubacher","2"],
+  ["Chuck Tait","2"],
+  ["Don Uhrig","2"],
+  ["Dan Lee","2"],
+  ["Thomas Lewis","2"],
+  ["Bill Thornton","2"],
+  ["Tyler Ulrich","2"],
+  ["Daniel Boreman","2"],
+  ["Jeff Goyette","2"],
+  ["John Lutz","3"],
+  ["Jeff Sacco","3"],
+  ["Matthew Kantor","3"],
+  ["Rory Golden","3"],
+  ["Brad White","3"],
+  ["Marty Stallone","3"],
+  ["Drew Templin","3"],
+  ["Ben Chapin","3"],
+  ["Joe Witkowski","3"],
+  ["Chase Maggs","3"],
+  ["David Rotelle","3"],
+  ["Tim Stringer","3"],
+  ["Jakob Templin","3"],
+  ["Blair Dewalt","3"],
+  ["Greg Hostetter","3"],
+  ["Joe Butto","3"],
+  ["Amos Fisher","4"],
+  ["George Audi","4"],
+  ["Putter Lutz","4"],
+  ["Conner Gobright","4"],
+  ["Jakob Chapman","4"],
+  ["Drew Eckel","4"],
+  ["David Farrar","4"],
+  ["Brad Baker","4"],
+  ["Daniel Briere","4"],
+  ["Andy Moses","4"],
+  ["Paul Marrella","4"],
+  ["Jon Conover","5"],
+  ["Bryan Seidl","5"],
+  ["Bryan Gentry","5"],
+  ["Steve Demchyk","5"],
+  ["Steve Kreider","5"],
+  ["Vinny DaGrosa","5"],
+  ["Drew Fagley","5"],
+  ["Adam Beilhart","5"],
+  ["Joe Moloney","5"],
+  ["Tyler Werner","5"],
+  ["Rob Campitelli","5"],
+  ["Daniel Stump","5"],
+  ["Bill Long","5"],
+  ["Billy Finneran","5"],
+  ["Larry Schultz","6"],
+  ["Jake Roth","6"],
+  ["Scott Bennick","6"],
+  ["Peyton Stetter","6"],
+  ["Peter Russell","6"],
+  ["Mike Southwick","6"],
+  ["Steven Arose","6"],
+  ["Eugene Shaffer","6"],
+  ["Andy Blickle","6"],
+  ["Chris Muhr","6"],
+  ["Jim Herlihy","7"],
+  ["Brian Jessen","7"],
+  ["Nick Ribeiro","7"],
+  ["Chris Cassel","7"],
+  ["Jon King","7"],
+  ["Todd Hazlett","7"],
+  ["Heath Ulrich","7"],
+  ["Joseph Cho","7"],
+  ["James Blickle","7"],
+  ["Andrew Morrison","7"],
+  ["Mike Desantis","7"],
+  ["Tim White","8"],
+  ["Tyler Henry","8"],
+  ["Chad Billingsley","8"],
+  ["Drew Seibert","8"],
+  ["Nick Lambros","8"],
+  ["Austin Helm","8"],
+  ["Zach Woodworth","8"],
+  ["Ron Hershey","8"],
+  ["Sud Patel","8"],
+  ["Colt Berg","9"],
+  ["Trent Glasser","9"],
+  ["Matt Forrer","9"],
+  ["Chris Schoellkopf","9"],
+  ["Paul Stetter","9"],
+  ["Drew Bell","9"],
+  ["Brian Leibell","9"],
+  ["Albert Evans","9"],
+  ["Austin Woodworth","9"],
+  ["Patrick Shields","9"],
+  ["Ryan Redner","9"],
+  ["Kirby Martin","10"],
+  ["Michael Duddy","10"],
+  ["Josey Orr","10"],
+  ["Chris Mancuso","10"],
+  ["Tyler Lentz","10"],
+  ["Jeff Smith","10"],
+  ["Matt Morelli","10"],
+  ["Samuel Marrella","10"],
+  ["Steve Savage","10"],
+  ["Robert Bereschak","10"],
+  ["Kyle Greth","10"],
+  ["Brad Moyer","10"],
+  ["Joseph Hnatishion","10"],
+  ["Andre Duffie","10"],
+  ["Chad Henne","10"],
+  ["Dean Fox","10"],
+  ["Jonathan Radwanski","10"],
+  ["Curt Kaucher","10"],
+  ["Andrew Maier","10"],
+  ["Bryan Siedlecki","10"],
+  ["Andy Gehman","10"],
+  ["Ted Kolva","10"],
+  ["Jong Han","10"],
+  ["Sanand Menon","10"],
+  ["Ryan Blough","10"],
+  ["Chris Butterworth","11"],
+  ["Justin Radwanski","11"],
+  ["Rory Bender","11"],
+  ["Kevin Kunkle","11"],
+  ["William Young","11"],
+  ["Nate Hnatishion","11"],
+  ["Christopher Nelis","11"],
+  ["Dan Shimko","11"],
+  ["Ryan Renninger","11"],
+  ["Galen Eby","11"],
+  ["Matt Freeborn","11"],
+  ["Greg Giles","11"],
+  ["Casey Duffy","11"],
+  ["Richard Gregor","11"],
+  ["Ted Lentz","11"],
+  ["Anthony Gerace","12"],
+  ["Adam Hershey","12"],
+  ["Charles Wright","12"],
+  ["Daniel Belk","12"],
+  ["Mike Duddy","12"],
+  ["Harvey Norris","12"],
+  ["Eric Burkey","12"],
+  ["Stephen Banco","12"],
+  ["David Stoudt","12"],
+  ["Ed Nevling","12"],
+  ["Michael Haas","12"],
+  ["Dan Kelly","12"],
+  ["Callum Hazlett","12"],
+  ["Richard Broadbent","12"],
+  ["Tim Wilmott","12"],
+  ["Joshua Southwick","13"],
+  ["Ken Weaver","13"],
+  ["Tim King","13"],
+  ["Rick Speicher","13"],
+  ["Mark Maggs","13"],
+  ["Brian Dietrich","13"],
+  ["Dave Uhrig","13"],
+  ["Hunter McDonough","13"],
+  ["Dominic Riccione","13"],
+  ["Mark Desantis","13"],
+  ["Todd Mease","13"],
+  ["Bian Horne","13"],
+  ["Barry Unger","13"],
+  ["Rick Burkey","13"],
+  ["Tim Martin","14"],
+  ["Joseph Burke","14"],
+  ["Bill Stiles","14"],
+  ["Kevin Hughes","14"],
+  ["Andrew Rusniak","14"],
+  ["Matthew Mayer","14"],
+  ["Greg Greg","14"],
+  ["Matt Stradling","14"],
+  ["John Sottosanti","15"],
+  ["Blaise Milanek","15"],
+  ["John Broadbent","15"],
+  ["Matt Timochenko","15"],
+  ["Patrick Colarusso","15"],
+  ["Ford Berg","15"],
+  ["Adam Waszkiewicz","15"],
+  ["Lorenzo Rafer","15"],
+  ["Matthew Marrella","15"],
+  ["Michael Stewart","15"],
+  ["Ed McKeaney","15"],
+  ["Dan Becker","16"],
+  ["Paul Rosa","16"],
+  ["Thomas Dobson","16"],
+  ["Michael Sirak","16"],
+  ["Todd Goshert","16"],
+  ["Bob Boris","16"],
+  ["Ted Dando","16"],
+  ["Dan Lara","16"],
+  ["Kevin Beiler","16"],
+  ["Josh Welk","16"],
+  ["Brian Conner","16"],
+  ["Andrew Higgins","16"],
+  ["Carl Sottosanti","16"],
+  ["Devon Garner","16"],
+  ["Todd Kaley","16"],
+  ["William Finneran","16"],
+  ["John Adams","16"],
+  ["Terrance Hanley","17"],
+  ["Eric Glass","17"],
+  ["James Loomis","17"],
+  ["Bob Carson","17"],
+  ["Keegan Hartman","17"],
+  ["Connor Uhrig","17"],
+  ["Weston Martin","17"],
+  ["John Morelli","17"],
+  ["Todd Woodworth","17"],
+  ["Mark Edfort","18"],
+  ["Robert Rhoads","18"],
+  ["Jason Skalski","18"],
+  ["Craig Perrotty","18"],
+  ["John Carlson","18"],
+  ["Chandler Lutz","18"],
+  ["Jay Bavlish","18"],
+  ["Carl Seidl","18"],
+  ["Ankit Shah","18"],
+  ["Kevin Iddings","18"],
+  ["Bryan Windham","18"],
+  ["Patrick Riccione","19"],
+  ["Randy Weaver","19"],
+  ["Jon Becker","19"],
+  ["Paul Debacco","19"],
+  ["Scott Cebul","19"],
+  ["Michael Brown","19"],
+  ["Benjamin Wagner","20"],
+  ["Cooper Garner","20"],
+  ["David Sourber","20"],
+  ["Henry Kramarski","20"],
+  ["Jaxson Freeborn","20"],
+  ["Eric Schippers","21"],
+  ["Eric Wolf","21"],
+  ["Tom Janowicz","21"],
+  ["Joe Smith","21"],
+  ["Tom Henefer","21"],
+  ["David Manidis","21"],
+  ["Scott Helm","21"],
+  ["Stanley Grabias","21"],
+  ["Chuck Lehman","21"],
+  ["Jeff Kolva","22"],
+  ["Art Auchenbach","22"],
+  ["Josh Mazzo","22"],
+  ["Jack Burke","22"],
+  ["Pete Stanislawczyk","22"],
+  ["David Neder","22"],
+  ["Teddy Kolva","23"],
+  ["Richard Palmer","23"],
+  ["Zach Ebert","23"],
+  ["David Stonesifer","23"],
+  ["Steve Gerhard","24"],
+  ["Rick Aulenbach","24"],
+  ["Michael Schmidtlein","24"],
+  ["Brett Rowe","24"],
+  ["Chris Hueston","24"],
+  ["Jay Conlin","24"],
+  ["David Fassnacht","24"],
+  ["Ron Nutting","25"],
+  ["Jim Donohue","25"],
+  ["Calvin Saur","25"],
+  ["Kyle Seibert","25"],
+  ["Tim Yoder","26"],
+  ["Anthony Bavlish","26"],
+  ["Chris Garner","26"],
+  ["Andrew Maier II","26"],
+  ["Richard Wetherhold","27"],
+  ["Kevin Moore","29"],
+  ["Shawn Iddings","30"],
+  ["Adam Altman","31"],
+  ["Randall Horst","32"],
+  ["Beth Stanislawczyk","33"],
+  ["James Piraino","33"],
+  ["Jan Sockel","34"]
 ];
 
 function defLU(){return{home:[[null,null],[null,null],[null,null]],away:[[null,null],[null,null],[null,null]]};}
@@ -640,15 +950,34 @@ function clearWeek(){
 }
 
 // ── ROSTER ────────────────────────────────────────────────
-function openRoster(){
-  document.getElementById('roster-body').innerHTML=BASE.map(p=>{
-    const any=p.av.some(a=>a===1);
-    const badges=any?p.av.map((a,i)=>`<span class="ab ${a?'y':'n'}">${WL[i]}</span>`).join(''):`<span class="ab none">None</span>`;
-    return`<tr><td>${p.n}</td><td>${hcpEl(p.h)}</td><td><div class="abadges">${badges}</div></td></tr>`;
-  }).join('');
+function openRoster(tab){
+  tab = tab || 'avail';
+  switchRosterTab(tab);
   document.getElementById('roster-ovl').classList.add('open');
 }
 function closeRoster(){document.getElementById('roster-ovl').classList.remove('open');}
+function switchRosterTab(tab){
+  document.getElementById('rtab-avail').classList.toggle('on', tab==='avail');
+  document.getElementById('rtab-eligible').classList.toggle('on', tab==='eligible');
+  document.getElementById('avail-tbl').style.display = tab==='avail'?'':'none';
+  document.getElementById('eligible-tbl').style.display = tab==='eligible'?'':'none';
+  if(tab==='avail'){
+    document.getElementById('roster-title').textContent='Roster & Availability';
+    document.getElementById('roster-sub').textContent='GAP Matches 2026 · Team 2 · 40 Players';
+    document.getElementById('roster-body').innerHTML=BASE.map(p=>{
+      const any=p.av.some(a=>a===1);
+      const badges=any?p.av.map((a,i)=>`<span class="ab ${a?'y':'n'}">${WL[i]}</span>`).join(''):`<span class="ab none">None</span>`;
+      return`<tr><td>${p.n}</td><td>${hcpEl(p.h)}</td><td><div class="abadges">${badges}</div></td></tr>`;
+    }).join('');
+  } else {
+    document.getElementById('roster-title').textContent='Full Eligible Roster';
+    document.getElementById('roster-sub').textContent='GAP 2026 · LedgeRock · 296 Players · Sorted by Course Hdcp';
+    document.getElementById('eligible-body').innerHTML=ELIGIBLE.map(([name,hdcp],i)=>{
+      const isP=hdcp.startsWith('+');
+      return`<tr><td style="color:var(--g4);font-size:11px;font-family:var(--mono);">${i+1}</td><td>${name}</td><td><span class="chcp${isP?' plus':''}">${hdcp}</span></td></tr>`;
+    }).join('');
+  }
+}
 
 // ── EMAIL ─────────────────────────────────────────────────
 function openEmail(){
