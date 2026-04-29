@@ -360,7 +360,7 @@ const BASE=[
   {n:"Brock Kovach",      h:"+6",  av:[1,1,1]},
   {n:"Alex Seelig",       h:"+5",  av:[1,1,1]},
   {n:"Zach Dilcher",      h:"+5",  av:[1,1,1]},
-  {n:"Nate Radwanski",    h:"+5",  av:[0,0,0]},
+  {n:"Nate Radwanski",    h:"+5",  av:[0,0,1]},
   {n:"Luke Fagley",       h:"+4",  av:[1,1,1]},
   {n:"Joshua Anderson",   h:"+4",  av:[1,1,1]},
   {n:"Grant Skyllas",     h:"+3",  av:[1,1,1]},
@@ -378,10 +378,10 @@ const BASE=[
   {n:"JP Radwanski",      h:"0",   av:[1,1,1]},
   {n:"Don Uhrig",         h:"2",   av:[1,1,1]},
   {n:"Jeff Goyette",      h:"2",   av:[0,1,1]},
-  {n:"Rory Golden",       h:"3",   av:[1,0,0]},
+  {n:"Rory Golden",       h:"3",   av:[1,0,1]},
   {n:"Chase Maggs",       h:"3",   av:[1,1,1]},
   {n:"Drew Templin",      h:"3",   av:[1,1,1]},
-  {n:"Blair Dewalt",      h:"3",   av:[1,1,0]},
+  {n:"Blair Dewalt",      h:"3",   av:[1,1,1]},
   {n:"Greg Hostetter",    h:"3",   av:[0,1,1]},
   {n:"Conner Gobright",   h:"4",   av:[1,1,1]},
   {n:"Jon Conover",       h:"5",   av:[1,1,1]},
@@ -395,8 +395,10 @@ const BASE=[
   {n:"Kyle Greth",        h:"10",  av:[1,1,1]},
   {n:"Brad Moyer",        h:"12",  av:[1,1,1]},
   {n:"Mark Maggs",        h:"13",  av:[1,1,1]},
-  {n:"Dan Lara",          h:"16",  av:[1,1,0]},
+  {n:"Dan Lara",          h:"16",  av:[1,1,1]},
   {n:"Mark Edfort",       h:"18",  av:[1,1,1]},
+  {n:"Jakob Templin",     h:"3",   av:[0,0,1]},
+  {n:"David Farrar",      h:"4",   av:[0,0,1]},
 ];
 
 const ELIGIBLE=[
@@ -708,7 +710,15 @@ let picked=null;
 function save(){localStorage.setItem('lr_t2_v3',JSON.stringify({w:W,lu:LU,late}));toast('Saved');}
 function all(){return[...BASE,...late];}
 function usedW(n,w){return[...LU[w].home,...LU[w].away].some(p=>p.some(x=>x&&x.n===n));}
-function avail(w){return all().filter(p=>!usedW(p.n,w)&&(p.av?p.av[w]!==0:true));}
+function hcpNum(h){
+  if(!h||h==='—')return 999;
+  const s=h.startsWith('+')?-1:1;
+  return s*parseFloat(h.replace('+',''));
+}
+function avail(w){
+  return all().filter(p=>!usedW(p.n,w)&&(p.av?p.av[w]!==0:true))
+    .sort((a,b)=>hcpNum(a.h)-hcpNum(b.h));
+}
 function isPlus(h){return h&&h.startsWith('+');}
 function find(n){return all().find(p=>p.n===n);}
 function esc(s){return s.split("'").join("\\'");}
